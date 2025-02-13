@@ -20,7 +20,6 @@ import Data.Void
 import Text.Megaparsec
 import qualified Text.Megaparsec as M
 import Text.Megaparsec.Char
-import Text.Megaparsec.Debug
 import qualified Text.Megaparsec.Char.Lexer as L
 
 
@@ -79,10 +78,10 @@ commaSep p = p `sepBy` (symbol ",")
 --------------------------------------------------------------------------------
 
 tuple, parens, square, angle :: Parser a -> Parser [a]
-tuple p = (commaSep p) `wrappedBy` "{" $ "}"
-parens p = (commaSep p) `wrappedBy` "(" $ ")"
-square p = (commaSep p) `wrappedBy` "[" $ "]"
-angle p = (commaSep p) `wrappedBy` "<" $ ">"
+tuple p = commaSep p `wrappedBy` "{" $ "}"
+parens p = commaSep p `wrappedBy` "(" $ ")"
+square p = commaSep p `wrappedBy` "[" $ "]"
+angle p = commaSep p `wrappedBy` "<" $ ">"
 
 
 -- listAtom :: Parser [Atom]
@@ -119,18 +118,18 @@ float :: Parser Double
 float = L.signed space L.float
 
 keyV :: Parser k -> Parser v -> Parser (Text -> KeyV k v Text)
-keyV k v = try(Insert <$> k <* symbol "=>" <*> v <* whitespace)
+keyV k v = try (Insert <$> k <* symbol "=>" <*> v <* whitespace)
        <|> Update <$> k <* symbol ":=" <*> v <* whitespace
 
 keyV' :: Parser a -> Parser (a, a)
 keyV' p = (,) <$> p <* symbol "=>" <*> p <* whitespace
 
 mapC :: Parser a -> Parser [a]
-mapC p = (commaSep p) `wrappedBy` "~{" $ "}~"
+mapC p = commaSep p `wrappedBy` "~{" $ "}~"
 
 mapE :: Parser kv -> Parser a -> Parser (Map kv a ann)
-mapE kv p = try (Map <$> (mapC kv))
-         <|>  ((UMap <$> (commaSep kv)
+mapE kv p = try (Map <$> mapC kv)
+         <|>  ((UMap <$> commaSep kv
                     <* symbol "|" <*> p)
              `wrappedBy` "~{" $ "}~")
 
@@ -138,7 +137,7 @@ mapE kv p = try (Map <$> (mapC kv))
 -- binary p = (commaSep (bitstring p)) `wrappedBy` "#{" $ "}#"
 
 binary :: Parser a -> Parser (Binary a Text)
-binary p = (commaSep (bitstringA p)) `wrappedBy` "#{" $ "}#"
+binary p = commaSep (bitstringA p) `wrappedBy` "#{" $ "}#"
 
 bitstring :: Parser a -> Parser (Text -> Bitstring a Text)
 bitstring p = Bitstring <$> (p `wrappedBy` "#<" $ ">")
@@ -190,7 +189,7 @@ literal = (LChar  <$> charP
       <*  whitespace
 
 fun :: Parser (Text -> Fun Text)
-fun = (try $ Fun
+fun = try (Fun
         <$ symbol "fun"
         <*> parens variableA
         <*  symbol "->"
@@ -213,8 +212,8 @@ exprs = Exprs <$> angle (exprA)
 
 expr :: Parser (Text -> Expr Text)
 expr  = EVar     <$> variableA
-     <|> EFunN    <$> (try funnameA)
-     <|> ELit     <$> (try literalA)
+     <|> EFunN    <$> try funnameA
+     <|> ELit     <$> try literalA
      <|> EFun     <$> funA
      <|> EList    <$> list exprA
      <|> ETuple   <$> tuple exprsA
@@ -295,7 +294,7 @@ keyVA = (annotation .) . keyV
 
 annotation :: Parser (Text -> a) -> Parser a
 annotation p = (try ((p <* symbol "-|" <*> takeWhileP (Just "annotation") (/= ')') ) `wrappedBy` "(" $ ")")
-           <|> p <*> (pure Data.Text.empty)) <* whitespace
+           <|> p <*> pure Data.Text.empty) <* whitespace
 
 --------------------------------------------------------------------------------
 

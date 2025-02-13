@@ -6,16 +6,17 @@ import System.Directory
 import System.FilePath.Posix(takeDirectory)
 import Test.Tasty
 import Test.Tasty.Hspec
+import Test.Hspec
 import Text.Megaparsec (errorBundlePretty)
 import System.IO (openFile, hClose, IOMode(..))
-import Data.Text.Prettyprint.Doc.Render.Text
-import Data.Text.Prettyprint.Doc
+import Prettyprinter.Render.Text (renderIO)
+import Prettyprinter (layoutSmart, defaultLayoutOptions)
 
 main :: IO ()
 main = do
   fps <- getCoreFiles "./test/data/jsx"
-  mapM generatePrettyCore fps
-  -- spec <- testSpec "ParseThenPretty" specCompare
+  mapM_ generatePrettyCore fps
+  spec <- testSpec "ParseThenPretty" specCompare
   defaultMain $ testGroup "Tests" []
 
 
@@ -64,14 +65,14 @@ generatePrettyCore :: FilePath -> IO ()
 generatePrettyCore fp =
   do x <- parseFile fp
      let new = "./test/generated/" ++ drop 6 fp
-     createDirectoryIfMissing True $ (takeDirectory new)
+     createDirectoryIfMissing True $ takeDirectory new
      h <- openFile new WriteMode
      renderIO h (layoutSmart defaultLayoutOptions (pretty x))
      hClose h
 
 
 isCoreFile :: String -> Bool
-isCoreFile fname = (== "eroc") $ take 4 $ reverse $ fname
+isCoreFile fname = (== "eroc") $ take 4 $ reverse fname
 
 getCoreFiles :: FilePath -> IO [FilePath]
 getCoreFiles basePath = do

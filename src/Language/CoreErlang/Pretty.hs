@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings, FlexibleInstances #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 -- |
 -- Module      :  Language.CoreErlang.Parser
@@ -14,12 +15,11 @@
 -- <http://erlang.org/doc/apps/compiler/compiler.pdf>
 module Language.CoreErlang.Pretty (Pretty(..), prettyText) where
 
-import Data.Text (empty, unpack, replace, Text)
+import Data.Text (unpack, replace, Text)
 import Data.Char as C
 import Language.CoreErlang.Syntax
-import Data.Text.Prettyprint.Doc
-import Text.Megaparsec (errorBundlePretty, ParseErrorBundle(..), Stream(..), ShowErrorComponent(..))
-import Data.Text.Prettyprint.Doc.Render.Text
+import Prettyprinter
+import Prettyprinter.Render.Text
 import Text.Megaparsec
 
 commaSep :: Pretty a => [a] -> Doc ann
@@ -85,7 +85,7 @@ instance Pretty a => Pretty (Attrs a) where
 instance Pretty a => Pretty (Const a) where
   pretty (CLit    x        ann) = prettyAnn ann $ pretty x
   pretty (CTuple  consts   ann) = prettyAnn ann $ tuplePretty consts
-  pretty (CList   list     ann) = prettyAnn ann $ pretty list
+  pretty (CList   list_    ann) = prettyAnn ann $ pretty list_
   pretty (CMap    kvs      ann) = prettyAnn ann $ enclose "~{" "}~" (commaSep kvs)
   pretty (CBinary bstrings ann) = prettyAnn ann $ binaryPretty bstrings
 
@@ -113,7 +113,7 @@ instance Pretty a => Pretty (Expr a) where
   pretty (EFunN   funname  ann) = prettyAnn ann $ pretty funname
   pretty (ELit    literal  ann) = prettyAnn ann $ pretty literal
   pretty (EFun    fun      ann) = prettyAnn ann $ pretty fun
-  pretty (EList   list     ann) = prettyAnn ann $ pretty list
+  pretty (EList   list_    ann) = prettyAnn ann $ pretty list_
   pretty (ETuple  xs       ann) = prettyAnn ann $ tuplePretty xs
   pretty (EMap    x        ann) = prettyAnn ann $ pretty x
   pretty (EBinary bstrings ann) = prettyAnn ann $ binaryPretty bstrings
@@ -136,7 +136,7 @@ instance Pretty a => Pretty (Clause a) where
 instance Pretty a => Pretty (Pat a) where
   pretty (PVar var         ann) = prettyAnn ann $ pretty var
   pretty (PLiteral lit     ann) = prettyAnn ann $ pretty lit
-  pretty (PList list       ann) = prettyAnn ann $ pretty list
+  pretty (PList list_      ann) = prettyAnn ann $ pretty list_
   pretty (PTuple pats      ann) = prettyAnn ann $ tuplePretty pats
   pretty (PBinary bstrings ann) = prettyAnn ann $ binaryPretty bstrings
   pretty (PMap m           ann) = prettyAnn ann $ pretty m

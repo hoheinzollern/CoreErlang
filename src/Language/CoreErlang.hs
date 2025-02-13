@@ -22,7 +22,8 @@ import Language.CoreErlang.Pretty as CE
 import Language.CoreErlang.Syntax as CE
 import Data.Text.IO (readFile)
 import Prelude hiding (readFile)
-import Data.Text.Prettyprint.Doc.Render.Text
+import Data.Functor ((<&>))
+import Prettyprinter.Render.Text ( hPutDoc )
 import System.IO (openFile, hClose, IOMode(..))
 import System.Directory (createDirectoryIfMissing)
 import System.FilePath.Posix(takeDirectory)
@@ -31,7 +32,7 @@ parseAndPretty :: FilePath -> IO ()
 parseAndPretty fp =
   do x <- parseFile fp
      let new = "generated/" ++ fp
-     createDirectoryIfMissing True $ (takeDirectory new)
+     createDirectoryIfMissing True $ takeDirectory new
      h <- openFile new WriteMode
      hPutDoc h (pretty x)
      hClose h
@@ -42,7 +43,7 @@ parseAndPretty fp =
 -- printResult (Right annMod) = putStrLn $ prettyPrint annMod
 
 parseFile :: FilePath -> IO (Either ParseErr (Module Text))
-parseFile fp = readFile fp >>= return . parseModuleA
+parseFile fp = readFile fp <&> parseModuleA
 
 
 -- readCoreFile :: FilePath -> IO Text
